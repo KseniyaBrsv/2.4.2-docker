@@ -2,7 +2,7 @@ FROM node:20.10-alpine
 
 WORKDIR /app
 
-ARG NODE_ENV=production
+ENV COUNTER_URL=counter:3001
 COPY ./package*.json ./
 RUN npm install
 COPY . .

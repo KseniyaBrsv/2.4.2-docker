@@ -1,5 +1,7 @@
 const express = require('express')
 const { v4: uuid } = require('uuid')
+const axios = require('axios');
+const counterUrl = process.env.COUNTER_URL || 'http://counter:3001';
 const router = express.Router()
 class Book {
   constructor (
@@ -62,19 +64,38 @@ router.get('/', (req, res) => {
 })
 
 // получить книгу по ID
-router.get('/:id', (req, res) => {
+router.get('/:id', async(req, res) => {
   const { book } = stor
   const { id } = req.params
-  const idx = book.findIndex(el => el.id === id)
-  if (idx !== -1) {
-    res.render('book/view', {
-      title: `Информация по книге ${book[idx].title}`,
-      book: book[idx]
-    })
-  } else {
-    res.status(404)
-    res.redirect('/404')
+
+   // Увеличить счётчик
+   try {
+    await axios.post(`${counterUrl}/counter/${id}/incr`);
+  } catch (error) {
+    console.error('Ошибка при увеличении счётчика:', error);
   }
+
+  // Получить значение счётчика
+  try {
+    const idx = book.findIndex(el => el.id === id)
+    const { data: { count } } = await axios.get(`${counterUrl}/counter/${id}`);
+
+    if (idx !== -1) {
+      res.render('book/view', {
+        title: `Информация по книге ${book[idx].title}`,
+        book: book[idx],
+        count: count
+      })
+    } else {
+      res.render('error/404', { title: 'Книга не найдена' });
+    }
+  
+  } catch (error) {
+    console.error('Ошибка при получении значения счётчика:', error);
+    res.status(500).send('Ошибка сервера');
+  }
+
+
 })
 
 router.get('/update/:id', (req, res) => {
@@ -84,7 +105,7 @@ router.get('/update/:id', (req, res) => {
   const idx = book.findIndex(el => el.id === id)
 
   if (idx === -1) {
-    res.redirect('/404')
+    res.render('error/404', { title: 'Что-то пошло не так' });
   }
 
   res.render('book/update', {
@@ -92,6 +113,7 @@ router.get('/update/:id', (req, res) => {
     book: book[idx]
   })
 })
+
 router.post('/update/:id',
   (req, res) => {
     const { book } = stor
@@ -111,9 +133,9 @@ router.post('/update/:id',
       }
       res.redirect('/api/books')
     } else {
-      res.status(404)
-      res.redirect('/404')
+      res.render('error/404', { title: 'Что-то пошло не так' });
     }
   })
+
 
 module.exports = router

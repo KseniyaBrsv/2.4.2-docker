@@ -6,6 +6,9 @@ const userRouter = require('./routes/user')
 const booksRouter = require('./routes/books')
 
 const app = express()
+const port = process.env.PORT || 3000
+
+
 app.use(bodyParser.json({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true })); 
 app.set('view engine', 'ejs')
@@ -19,5 +22,8 @@ app.use('/api/books', booksRouter)
 
 app.use(error404)
 
-const PORT = process.env.PORT || 3000
-app.listen(PORT)
+
+app.listen(port, () => {
+    console.log(`Book viewer listening at http://localhost:${port}`);
+  });
+

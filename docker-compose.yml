@@ -1,0 +1,23 @@
+services:
+  storage:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data:/data
+  counter:
+    build: counter
+    ports:
+      - "3002:3001"
+    environment:
+      - PORT=3001
+      - STORAGE_URL=redis://storage:6379
+  book:
+    build: book
+    ports:
+      - "80:3000"
+    environment:
+      - COUNTER_URL=http://counter:3001
+      - PORT=3000
+volumes:
+  data:
